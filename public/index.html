@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediStore Dashboard</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <a class="sidebar-logo" href="#" onclick="navigate('dashboard')">
+    <div class="logo-icon">💊</div>
+    <div class="logo-text">Medi<span>Store</span></div>
+  </a>
+  <div class="sidebar-nav">
+    <div class="nav-section-title">Overview</div>
+    <button class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
+      <span class="nav-icon">📊</span> Dashboard
+    </button>
+    <div class="nav-section-title">Management</div>
+    <button class="nav-item" data-page="inventory" onclick="navigate('inventory')">
+      <span class="nav-icon">📦</span> Inventory
+      <span class="nav-badge" id="badge-low" style="display:none"></span>
+    </button>
+    <button class="nav-item" data-page="purchases" onclick="navigate('purchases')">
+      <span class="nav-icon">🛒</span> Purchases
+    </button>
+    <button class="nav-item" data-page="sales" onclick="navigate('sales')">
+      <span class="nav-icon">💰</span> Sales
+    </button>
+    <button class="nav-item" data-page="suppliers" onclick="navigate('suppliers')">
+      <span class="nav-icon">🚚</span> Suppliers
+    </button>
+    <div class="nav-section-title">Analytics</div>
+    <button class="nav-item" data-page="reports" onclick="navigate('reports')">
+      <span class="nav-icon">📈</span> Reports
+    </button>
+  </div>
+  <div class="sidebar-footer">
+    <button class="nav-item" onclick="doLogout()">
+      <span class="nav-icon">🚪</span> Logout
+    </button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <button onclick="toggleSidebar()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;display:none" id="mobileMenuBtn">☰</button>
+    <div class="topbar-title" id="pageTitle">Dashboard</div>
+    <div class="topbar-date" id="topbarDate"></div>
+    <div class="user-badge">👤 <span id="userLabel">Admin</span></div>
+  </div>
+
+  <div class="content">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div class="page active" id="page-dashboard">
+      <div class="stat-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-label">Total Products</div><div class="stat-value" id="s-total">—</div></div>
+        <div class="stat-card info"><div class="stat-label">Total Stock</div><div class="stat-value" id="s-stock">—</div></div>
+        <div class="stat-card warning"><div class="stat-label">Low Stock</div><div class="stat-value" id="s-low">—</div></div>
+        <div class="stat-card danger"><div class="stat-label">Out of Stock</div><div class="stat-value" id="s-out">—</div></div>
+        <div class="stat-card warning"><div class="stat-label">Near Expiry</div><div class="stat-value" id="s-near">—</div></div>
+        <div class="stat-card danger"><div class="stat-label">Expired (w/ Stock)</div><div class="stat-value" id="s-exp">—</div></div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card success"><div class="stat-label">Today's Sales</div><div class="stat-value font-mono" id="s-tsales">—</div><div class="stat-sub" id="s-tsales-c">—</div></div>
+        <div class="stat-card success"><div class="stat-label">Today's Profit</div><div class="stat-value font-mono" id="s-tprofit">—</div></div>
+        <div class="stat-card"><div class="stat-label">Week Sales</div><div class="stat-value font-mono" id="s-wsales">—</div></div>
+        <div class="stat-card"><div class="stat-label">Week Profit</div><div class="stat-value font-mono" id="s-wprofit">—</div></div>
+        <div class="stat-card"><div class="stat-label">Month Sales</div><div class="stat-value font-mono" id="s-msales">—</div></div>
+        <div class="stat-card"><div class="stat-label">Month Profit</div><div class="stat-value font-mono" id="s-mprofit">—</div></div>
+      </div>
+      <div class="grid-2 mb-16">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Sales Trend</div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-sm btn-outline trend-btn active" data-period="daily" onclick="loadTrend('daily')">Daily</button>
+              <button class="btn btn-sm btn-outline trend-btn" data-period="weekly" onclick="loadTrend('weekly')">Weekly</button>
+              <button class="btn btn-sm btn-outline trend-btn" data-period="monthly" onclick="loadTrend('monthly')">Monthly</button>
+            </div>
+          </div>
+          <div class="panel-body"><div class="chart-container"><canvas id="salesChart"></canvas></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Profit Trend</div></div>
+          <div class="panel-body"><div class="chart-container"><canvas id="profitChart"></canvas></div></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Recent Sales</div>
+            <button class="btn btn-sm btn-outline" onclick="navigate('sales')">View All</button>
+          </div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Date</th><th>Customer</th><th class="text-right">Amount</th><th class="text-right">Profit</th></tr></thead>
+            <tbody id="recentSalesTbody"></tbody></table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Top Selling (30 days)</div></div>
+          <div class="table-wrap">
+            <table><thead><tr><th>#</th><th>Product</th><th>Qty</th><th class="text-right">Revenue</th></tr></thead>
+            <tbody id="topProductsTbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+      <div class="grid-2 mt-16">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">⚠️ Low Stock Alerts</div>
+            <button class="btn btn-sm btn-outline" onclick="navigate('inventory')">Manage</button>
+          </div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Product</th><th>Category</th><th>Stock</th><th>Min</th></tr></thead>
+            <tbody id="lowStockTbody"></tbody></table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">🗓️ Near Expiry Batches</div></div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Product</th><th>Batch</th><th>Qty</th><th>Expires</th></tr></thead>
+            <tbody id="nearExpiryTbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== INVENTORY ===== -->
+    <div class="page" id="page-inventory">
+      <div class="toolbar">
+        <div class="search-bar" style="flex:1;max-width:300px">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="invSearch" placeholder="Search by name, brand..." oninput="filterInventory()">
+        </div>
+        <select id="invCategory" onchange="filterInventory()" style="width:auto">
+          <option value="">All Categories</option>
+        </select>
+        <select id="invStatus" onchange="filterInventory()" style="width:auto">
+          <option value="">All Status</option>
+          <option value="in_stock">In Stock</option>
+          <option value="low_stock">Low Stock</option>
+          <option value="out_of_stock">Out of Stock</option>
+          <option value="near_expiry">Near Expiry</option>
+          <option value="expired">Expired</option>
+        </select>
+        <div class="toolbar-right">
+          <button class="btn btn-outline" onclick="openBatchSearch()">🔍 Batch Lookup</button>
+          <button class="btn btn-primary" onclick="openProductModal()">+ Add Medicine</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Inventory (<span id="invCount">0</span> products)</div>
+          <div style="font-size:12px;color:var(--muted)">Stock Value: <strong class="text-teal" id="stockVal">₹0</strong></div>
+        </div>
+        <div class="table-wrap">
+          <table id="inventoryTable">
+            <thead>
+              <tr>
+                <th>Product</th><th>Brand</th><th>Category</th>
+                <th>Selling ₹</th><th>Total Stock</th>
+                <th>Batches</th><th>Nearest Expiry</th>
+                <th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="inventoryTbody"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="invPagination"></div>
+      </div>
+    </div>
+
+    <!-- ===== PURCHASES ===== -->
+    <div class="page" id="page-purchases">
+      <div class="toolbar">
+        <div class="flex gap-8">
+          <input type="date" id="purFrom" style="width:auto" onchange="loadPurchases()">
+          <span style="color:var(--muted);font-size:13px">to</span>
+          <input type="date" id="purTo" style="width:auto" onchange="loadPurchases()">
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-primary" onclick="openPurchaseModal()">+ New Purchase</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Purchase History</div>
+          <div style="font-size:12px;color:var(--muted)">Total: <strong class="text-teal" id="purTotal">₹0</strong></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Invoice</th><th>Supplier</th><th>Items</th><th class="text-right">Amount</th><th>Actions</th></tr></thead>
+            <tbody id="purchasesTbody"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="purPagination"></div>
+      </div>
+    </div>
+
+    <!-- ===== SALES ===== -->
+    <div class="page" id="page-sales">
+      <div class="toolbar">
+        <div class="flex gap-8">
+          <input type="date" id="salFrom" style="width:auto" onchange="loadSales()">
+          <span style="color:var(--muted);font-size:13px">to</span>
+          <input type="date" id="salTo" style="width:auto" onchange="loadSales()">
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-primary" onclick="openSaleModal()">+ New Sale</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Sales History</div>
+          <div class="flex gap-8" style="font-size:12px;color:var(--muted)">
+            Total: <strong class="text-teal" id="salTotal">₹0</strong>
+            &nbsp;| Profit: <strong class="text-success" id="salProfit">₹0</strong>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Customer</th><th>Items</th><th class="text-right">Amount</th><th class="text-right">Profit</th><th>Actions</th></tr></thead>
+            <tbody id="salesTbody"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="salPagination"></div>
+      </div>
+    </div>
+
+    <!-- ===== SUPPLIERS ===== -->
+    <div class="page" id="page-suppliers">
+      <div class="toolbar">
+        <div class="toolbar-right">
+          <button class="btn btn-primary" onclick="openSupplierModal()">+ Add Supplier</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Suppliers</div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Name</th><th>Contact</th><th>Address</th><th>Email</th><th>Actions</th></tr></thead>
+            <tbody id="suppliersTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== REPORTS ===== -->
+    <div class="page" id="page-reports">
+      <div class="panel mb-16">
+        <div class="panel-body">
+          <div class="flex gap-8" style="flex-wrap:wrap">
+            <div class="form-group" style="margin:0;flex:1;min-width:140px">
+              <label>From Date</label><input type="date" id="repFrom">
+            </div>
+            <div class="form-group" style="margin:0;flex:1;min-width:140px">
+              <label>To Date</label><input type="date" id="repTo">
+            </div>
+            <div class="form-group" style="margin:0;flex:1;min-width:140px">
+              <label>Category</label>
+              <select id="repCategory"><option value="">All</option></select>
+            </div>
+            <div style="align-self:flex-end;display:flex;gap:8px;padding-bottom:16px">
+              <button class="btn btn-outline btn-sm" onclick="setReportPreset('today')">Today</button>
+              <button class="btn btn-outline btn-sm" onclick="setReportPreset('week')">This Week</button>
+              <button class="btn btn-outline btn-sm" onclick="setReportPreset('month')">This Month</button>
+              <button class="btn btn-primary" onclick="loadReport()">Generate</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="reportContent" style="display:none">
+        <div class="stat-grid" id="repStats"></div>
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Best Selling Products</div>
+              <button class="btn btn-sm btn-outline" onclick="exportCSV()">⬇ Export CSV</button>
+            </div>
+            <div class="table-wrap">
+              <table><thead><tr><th>#</th><th>Product</th><th>Category</th><th>Qty Sold</th><th class="text-right">Revenue</th><th class="text-right">Profit</th></tr></thead>
+              <tbody id="repBestTbody"></tbody></table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Daily Breakdown</div></div>
+            <div class="table-wrap" style="max-height:300px;overflow-y:auto">
+              <table><thead><tr><th>Date</th><th>Transactions</th><th class="text-right">Sales</th><th class="text-right">Profit</th></tr></thead>
+              <tbody id="repDailyTbody"></tbody></table>
+            </div>
+          </div>
+        </div>
+        <div class="grid-2 mt-16">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Near-Expiry Batches</div></div>
+            <div class="table-wrap">
+              <table><thead><tr><th>Product</th><th>Batch</th><th>Qty</th><th>Expires</th><th>Supplier</th></tr></thead>
+              <tbody id="repNearExpiryTbody"></tbody></table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Expired Stock (still in inventory)</div></div>
+            <div class="table-wrap">
+              <table><thead><tr><th>Product</th><th>Batch</th><th>Qty</th><th>Expired On</th></tr></thead>
+              <tbody id="repExpiredTbody"></tbody></table>
+            </div>
+          </div>
+        </div>
+        <div class="grid-2 mt-16">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Slow Moving Products</div></div>
+            <div class="table-wrap">
+              <table><thead><tr><th>Product</th><th>Category</th><th>Stock</th><th class="text-right">Price</th></tr></thead>
+              <tbody id="repSlowTbody"></tbody></table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Low Stock Summary</div></div>
+            <div class="panel-body" id="repAlertsSummary"></div>
+          </div>
+        </div>
+        <div class="toolbar mt-16" style="justify-content:center">
+          <button class="btn btn-outline" onclick="exportCSV()">⬇ Export CSV</button>
+          <button class="btn btn-outline" onclick="window.print()">🖨 Print</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ===== PRODUCT MODAL (master data only — no batch/stock) ===== -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="productModalTitle">Add Medicine</div>
+      <button class="modal-close" onclick="closeModal('productModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-box">
+        ℹ️ This form stores product master data only. To add stock, create a <strong>Purchase</strong> entry which will record a batch with quantity, expiry date, and purchase price.
+      </div>
+      <input type="hidden" id="prodId">
+      <div class="form-grid">
+        <div class="form-group"><label>Product Name *</label><input type="text" id="prodName" placeholder="e.g. Paracetamol 500mg"></div>
+        <div class="form-group"><label>Generic Name</label><input type="text" id="prodGeneric" placeholder="e.g. Paracetamol"></div>
+        <div class="form-group"><label>Brand</label><input type="text" id="prodBrand" placeholder="e.g. Crocin"></div>
+        <div class="form-group"><label>Category</label>
+          <select id="prodCategory">
+            <option value="">Select...</option>
+            <option>Analgesics</option><option>Antibiotics</option><option>Antacids</option>
+            <option>Antifungals</option><option>Antihistamines</option><option>Cardiac</option>
+            <option>Diabetes</option><option>Dermatology</option><option>ENT</option>
+            <option>Ophthalmology</option><option>Vitamins</option><option>Syrup</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Dosage Form</label><input type="text" id="prodDosageForm" placeholder="e.g. Tablet, Capsule, Syrup"></div>
+        <div class="form-group"><label>Unit</label>
+          <select id="prodUnit">
+            <option value="tablet">Tablet</option><option value="capsule">Capsule</option>
+            <option value="ml">ml</option><option value="mg">mg</option>
+            <option value="strip">Strip</option><option value="bottle">Bottle</option>
+            <option value="tube">Tube</option><option value="sachet">Sachet</option>
+            <option value="piece">Piece</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Selling Price (₹) *</label><input type="number" id="prodSellingPrice" step="0.01" min="0" placeholder="0.00"></div>
+        <div class="form-group"><label>Min Stock Alert Level</label><input type="number" id="prodMinStock" min="0" placeholder="10"></div>
+        <div class="form-group full"><label>Description</label><textarea id="prodDesc" rows="2" placeholder="Optional notes..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('productModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProduct()">Save Medicine</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PURCHASE MODAL (with batch number + expiry per line) ===== -->
+<div class="modal-overlay" id="purchaseModal">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="modal-title">New Purchase Entry</div>
+      <button class="modal-close" onclick="closeModal('purchaseModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Purchase Date *</label><input type="date" id="purDate"></div>
+        <div class="form-group"><label>Supplier</label>
+          <select id="purSupplier"><option value="">Select Supplier</option></select>
+        </div>
+        <div class="form-group"><label>Invoice Number</label><input type="text" id="purInvoice" placeholder="INV-001"></div>
+        <div class="form-group"><label>Notes</label><input type="text" id="purNotes" placeholder="Optional notes..."></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px">
+        <label style="margin:0">Items — each line creates a stock batch</label>
+        <button class="btn btn-sm btn-outline" onclick="addPurchaseRow()">+ Add Item</button>
+      </div>
+      <div class="items-list">
+        <div class="items-list-header purchase-header">
+          <div>Product</div><div>Batch No. *</div><div>Expiry Date</div>
+          <div>Qty</div><div>Unit Cost (₹)</div><div>Total</div><div></div>
+        </div>
+        <div id="purchaseRows"></div>
+        <div class="items-total">Total: <strong class="font-mono" id="purGrandTotal" style="margin-left:8px">₹0.00</strong></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('purchaseModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePurchase()">Save Purchase</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SALE MODAL ===== -->
+<div class="modal-overlay" id="saleModal">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="modal-title">New Sale / Bill</div>
+      <button class="modal-close" onclick="closeModal('saleModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Sale Date *</label><input type="date" id="salDate"></div>
+        <div class="form-group"><label>Customer Name</label><input type="text" id="salCustomer" placeholder="Walk-in Customer"></div>
+        <div class="form-group full"><label>Notes</label><input type="text" id="salNotes" placeholder="Optional notes..."></div>
+      </div>
+      <div class="info-box">
+        ℹ️ Stock is deducted using <strong>FEFO</strong> (First Expiry, First Out) — earliest-expiring batches are consumed first automatically.
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px">
+        <label style="margin:0">Items</label>
+        <button class="btn btn-sm btn-outline" onclick="addSaleRow()">+ Add Item</button>
+      </div>
+      <div class="items-list">
+        <div class="items-list-header">
+          <div>Product</div><div>Available</div><div>Qty</div><div>Unit Price (₹)</div><div>Total</div><div></div>
+        </div>
+        <div id="saleRows"></div>
+        <div class="items-total" style="justify-content:space-between;padding:12px">
+          <span style="font-size:12px;color:var(--muted)">Est. Profit: <strong class="text-success" id="salEstProfit">₹0.00</strong></span>
+          <span>Total: <strong class="font-mono" id="salGrandTotal" style="margin-left:8px">₹0.00</strong></span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('saleModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSale()">Save Sale</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SUPPLIER MODAL ===== -->
+<div class="modal-overlay" id="supplierModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="supplierModalTitle">Add Supplier</div>
+      <button class="modal-close" onclick="closeModal('supplierModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="supId">
+      <div class="form-group"><label>Supplier Name *</label><input type="text" id="supName"></div>
+      <div class="form-group"><label>Contact Number</label><input type="text" id="supContact"></div>
+      <div class="form-group"><label>Address</label><input type="text" id="supAddress"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="supEmail"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('supplierModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSupplier()">Save Supplier</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BATCH DETAIL / PRODUCT DETAIL MODAL ===== -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="modal-title" id="detailTitle">Details</div>
+      <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<!-- ===== BATCH SEARCH / RECALL MODAL ===== -->
+<div class="modal-overlay" id="batchSearchModal">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="modal-title">🔍 Batch Lookup / Recall Traceability</div>
+      <button class="modal-close" onclick="closeModal('batchSearchModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Batch Number</label>
+        <input type="text" id="batchSearchInput" placeholder="Enter batch number (partial match supported)..." oninput="runBatchSearch()">
+      </div>
+      <div id="batchSearchResults">
+        <div class="empty-state"><div class="empty-icon">🔍</div>Enter a batch number above to search</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="alert" id="toastAlert">
+  <span class="alert-icon" id="toastIcon">✅</span>
+  <span id="toastMsg">Success</span>
+</div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

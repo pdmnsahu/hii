@@ -1,0 +1,19 @@
+{
+  "name": "medistore-pharmacy-dashboard",
+  "version": "2.0.0",
+  "description": "Pharmacy management system with batch-aware inventory (FEFO)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node database/seed.js",
+    "migrate": "node database/migrate.js"
+  },
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.8.0",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0"
+  }
+}
